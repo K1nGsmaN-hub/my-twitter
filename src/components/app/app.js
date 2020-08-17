@@ -13,10 +13,12 @@ class App extends Component {
     super(props);
     this.state = {
       data: [
-        {label: 'Going to learn react', important: false, key: 'qweqweq'},
-        {label: 'That is so good', important: true, key: 'asdadas'},
-        {label: 'I need a break...', important: false, key: 'zxcvzxc'},
-      ]
+        {label: 'Going to learn react', important: false, like: false, key: 'qweqweq'},
+        {label: 'That is so good', important: false, like: false, key: 'asdadas'},
+        {label: 'I need a break...', important: false, like: false, key: 'zxcvzxc'},
+      ],
+      term: '',
+      filter: 'all'
     }
   }
 
@@ -51,17 +53,78 @@ class App extends Component {
     })
   }
 
+  onToggleImportant = (key) => {
+    this.setState(({data}) => {
+      const index = data.findIndex(elem => elem.key === key)
+
+      const newItem = {...data[index], important: !data[index].important}
+      const newData = [...data.slice(0, index), newItem, ...data.slice(index + 1)]
+
+      return {
+        data: newData
+      }
+    })
+  }
+
+  onToggleLiked = (key) => {
+    this.setState(({data}) => {
+      const index = data.findIndex(elem => elem.key === key)
+
+      const newItem = {...data[index], like: !data[index].like}
+      const newData = [...data.slice(0, index), newItem, ...data.slice(index + 1)]
+
+      return {
+        data: newData
+      }
+    })
+  }
+
+  searchPost = (items, term) => {
+    if (term.length === 0) {
+      return items
+    } else {
+      return items.filter(item => item.label.indexOf(term) > -1)
+    }
+  }
+
+  onUpdateSearch = (term) => {
+    this.setState({term})
+  }
+
+  filterPost = (items, filter) => {
+    if (filter === 'like') {
+      return items.filter(item => item.like)
+    } else {
+      return items
+    }
+  }
+  onFilterSelect = (filter) => {
+    this.setState({filter})
+  }
+
   render() {
+    const {data, term, filter} = this.state
+
+    const liked = this.state.data.filter(elem => elem.like === true).length
+    const elemsCount = this.state.data.length
+
+    const visiblePosts = this.filterPost(this.searchPost(data, term), filter)
+
     return (
         <div className="app">
-          <AppHead />
+          <AppHead liked={liked} elemsCount={elemsCount}/>
           <div className="search-panel d-flex">
-            <SearchPanel />
-            <PostStatusFilter />
+            <SearchPanel onUpdateSearch={this.onUpdateSearch}/>
+            <PostStatusFilter
+                filter={filter}
+                onFilterSelect={this.onFilterSelect}
+            />
           </div>
           <PostList
-              posts={this.state.data}
+              posts={visiblePosts}
               onDelete={this.deleteItem}
+              onToggleImportant={this.onToggleImportant}
+              onToggleLiked={this.onToggleLiked}
           />
           <PostAddForm
               onAdd={this.addItem}
